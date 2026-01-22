@@ -76,17 +76,67 @@ MODEL_DIR = ROOT / "models"
 
 
 def find_model_directory():
-    """Find the models directory in various possible locations derived from ROOT."""
-    candidates = [
+    candidates = []
+
+    try:
+        exe_dir = Path(sys.executable).resolve().parent
+        candidates.extend([
+            exe_dir / "models",
+            exe_dir.parent / "models",
+            exe_dir.parent.parent / "models",
+        ])
+    except Exception:
+        pass
+
+    try:
+        argv0_dir = Path(sys.argv[0]).resolve().parent
+        candidates.extend([
+            argv0_dir / "models",
+            argv0_dir.parent / "models",
+        ])
+    except Exception:
+        pass
+
+    try:
+        candidates.append(Path.cwd() / "models")
+    except Exception:
+        pass
+    candidates.extend([
         MODEL_DIR,
         ROOT.parent / "models",
         ROOT.parent.parent / "models",
-    ]
+    ])
 
-    for candidate in candidates:
-        if (candidate / "model.onnx").exists() and (candidate / "quality.keras").exists():
+    try:
+        file_parents = list(Path(__file__).resolve().parents)
+        for level in range(1, min(5, len(file_parents))):
+            candidates.append(file_parents[level-1] / "models")
+    except Exception:
+        pass
+
+    logging.debug(f"Model search order candidates (first-to-last): {candidates}")
+
+    seen = set()
+    deduped = []
+    for c in candidates:
+        try:
+            c_norm = c.resolve()
+        except Exception:
+            c_norm = c
+        if c_norm not in seen:
+            seen.add(c_norm)
+            deduped.append(c)
+
+    for candidate in deduped:
+        model_exists = (candidate / "model.onnx").exists()
+        quality_exists = (candidate / "quality.keras").exists()
+        labels_exists = (candidate / "labels.txt").exists()
+        logging.debug(f"Checking model candidate: {candidate} -> model.onnx={model_exists}, quality.keras={quality_exists}, labels.txt={labels_exists}")
+        if model_exists and quality_exists:
+            logging.info(f"Selected model directory: {candidate}")
             return candidate
 
+    logging.warning(f"No model directory with both model.onnx and quality.keras found among candidates; returning default: {MODEL_DIR}")
     # Return the default and let the calling code handle missing files
     return MODEL_DIR
 
@@ -1394,8 +1444,13 @@ def main():
                     "results": []
                 }
                 
-                runner._safe_write_json(status_path, status)
-                
+                # Write initial status file directly (runner isn't initialized yet)
+                try:
+                    with open(status_path, 'w') as sf:
+                        json.dump(status, sf, indent=2, default=str)
+                except Exception as e:
+                    logging.warning(f"Failed to write initial status file: {e}")
+
                 logging.info("Background processing started - loading models")
                 
                 # Initialize runner in background

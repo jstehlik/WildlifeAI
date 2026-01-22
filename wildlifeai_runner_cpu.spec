@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
 from pathlib import Path
-from PyInstaller.utils.hooks import collect_all, collect_dynamic_libs
+from PyInstaller.utils.hooks import collect_all, collect_dynamic_libs, Tree
 
 # Collect additional data, binaries, and hidden imports
 tf_datas, tf_bins, tf_hidden = collect_all("tensorflow")
@@ -25,11 +25,8 @@ models_dir = current_dir / "models"
 block_cipher = None
 
 # Base lists for Analysis inputs
-datas = [
-    (str(models_dir / 'model.onnx'), 'models'),
-    (str(models_dir / 'quality.keras'), 'models'),
-    (str(models_dir / 'labels.txt'), 'models'),
-]
+datas = []
+datas += Tree(str(models_dir), prefix='models')
 binaries = []
 hiddenimports = [
     # TensorFlow components (for quality classifier)
