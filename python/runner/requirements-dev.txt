@@ -1,3 +1,4 @@
 pyinstaller>=5.0.0
 pytest>=7.0.0
 pytest-cov>=4.0.0
+lupa>=1.0
