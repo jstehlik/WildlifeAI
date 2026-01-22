@@ -1270,6 +1270,9 @@ def main():
         Path.cwd() / "runner_debug.log",
         Path(os.environ.get('TEMP', '.')) / "wai_runner_debug.log"
     ])
+
+    for h in logging.root.handlers[:]:
+        logging.root.removeHandler(h)
     
     handlers = [logging.StreamHandler(sys.stdout)]
     
