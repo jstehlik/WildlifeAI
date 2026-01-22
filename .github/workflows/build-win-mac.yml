@@ -1,5 +1,6 @@
 name: Build Windows & macOS Plugin
 on:
+  workflow_dispatch: 
   push:
     tags: ['v*']
 
