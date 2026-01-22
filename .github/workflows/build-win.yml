@@ -10,12 +10,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python -m pip install --upgrade pip
-      - run: pip install -r python/runner/requirements.txt pyinstaller
-      - run: pyinstaller python/runner/wai_runner.py --onefile --name kestrel_runner
-      - run: pyinstaller python/runner/wildlifeai_runner.py --onefile --name wildlifeai_runner_cpu
-      - run: copy dist\kestrel_runner.exe plugin\WildlifeAI.lrplugin\bin\win\
-      - run: python scripts/package_plugin.py
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r python/runner/requirements.txt pyinstaller
+          pyinstaller python/runner/wai_runner.py --onefile --name kestrel_runner
+          pyinstaller python/runner/wildlifeai_runner.py --onefile --name wildlifeai_runner_cpu
+          copy dist\kestrel_runner.exe plugin\WildlifeAI.lrplugin\bin\win\
+          copy dist\wildlifeai_runner_cpu.exe plugin\WildlifeAI.lrplugin\bin\win\
+          python scripts/package_plugin.py
       - uses: actions/upload-artifact@v4
         with:
           name: WildlifeAI-win
