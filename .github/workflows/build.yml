@@ -1,8 +1,7 @@
 name: Build Lightroom Plugin
 on:
-  push:
-    branches: [ main ]
-    tags: [ 'v*' ]
+  workflow_dispatch:
+    
 jobs:
   build-win:
     runs-on: windows-latest
