@@ -13,6 +13,7 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: pip install -r python/runner/requirements.txt pyinstaller
       - run: pyinstaller python/runner/wai_runner.py --onefile --name kestrel_runner
+      - run: pyinstaller python/runner/wildlifeai_runner.py --onefile --name wildlifeai_runner_cpu
       - run: copy dist\kestrel_runner.exe plugin\WildlifeAI.lrplugin\bin\win\
       - run: python scripts/package_plugin.py
       - uses: actions/upload-artifact@v4
@@ -24,6 +25,29 @@ jobs:
     needs: [build-win]
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0            # ensure full history for rev-parse
+          persist-credentials: true # allow git push with GITHUB_TOKEN
+
+      - name: Create tag from commit SHA
+        id: create_tag
+        run: |
+          # short SHA
+          SHORT_SHA=$(git rev-parse --short "$GITHUB_SHA")
+          # make tag unique (optional): include run number or date if you want
+          TAG="ci-${SHORT_SHA}"
+          echo "Creating tag: $TAG for commit $GITHUB_SHA"
+          # create an annotated tag (you can use a lightweight tag instead if preferred)
+          git tag -a "$TAG" -m "CI release for $GITHUB_SHA"
+          # push the tag
+          git push origin "refs/tags/$TAG"
+          # expose TAG to later steps
+          echo "TAG=$TAG" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
       - uses: actions/download-artifact@v4
         with:
           pattern: WildlifeAI-*
@@ -34,6 +58,8 @@ jobs:
           cp artifacts/WildlifeAI-win/WildlifeAI.lrplugin.zip dist/WildlifeAI-win.lrplugin.zip
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.create_tag.outputs.TAG }}
           files: dist/*.zip
+          overwrite_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
