@@ -1,8 +1,6 @@
 name: Build Windows & macOS Plugin
 on:
   workflow_dispatch: 
-  push:
-    tags: ['v*']
 
 jobs:
   build-win:
@@ -14,8 +12,7 @@ jobs:
           python-version: '3.11'
       - run: python -m pip install --upgrade pip
       - run: pip install -r python/runner/requirements.txt pyinstaller
-      - run: pyinstaller python/runner/kestrel_runner.py --onefile --name kestrel_runner
-      - run: mkdir plugin/WildlifeAI.lrplugin/bin/win
+      - run: pyinstaller python/runner/wai_runner.py --onefile --name kestrel_runner
       - run: copy dist\kestrel_runner.exe plugin\WildlifeAI.lrplugin\bin\win\
       - run: python scripts/package_plugin.py
       - uses: actions/upload-artifact@v4
@@ -23,26 +20,8 @@ jobs:
           name: WildlifeAI-win
           path: dist/WildlifeAI.lrplugin.zip
 
-  build-mac:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: python -m pip install --upgrade pip
-      - run: pip install -r python/runner/requirements.txt pyinstaller
-      - run: pyinstaller python/runner/kestrel_runner.py --onefile --name kestrel_runner
-      - run: mkdir -p plugin/WildlifeAI.lrplugin/bin/mac
-      - run: cp dist/kestrel_runner plugin/WildlifeAI.lrplugin/bin/mac/
-      - run: python scripts/package_plugin.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: WildlifeAI-mac
-          path: dist/WildlifeAI.lrplugin.zip
-
   release:
-    needs: [build-win, build-mac]
+    needs: [build-win]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -53,7 +32,6 @@ jobs:
         run: |
           mkdir dist
           cp artifacts/WildlifeAI-win/WildlifeAI.lrplugin.zip dist/WildlifeAI-win.lrplugin.zip
-          cp artifacts/WildlifeAI-mac/WildlifeAI.lrplugin.zip dist/WildlifeAI-mac.lrplugin.zip
       - uses: softprops/action-gh-release@v2
         with:
           files: dist/*.zip
