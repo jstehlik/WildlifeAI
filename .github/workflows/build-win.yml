@@ -1,4 +1,4 @@
-name: Build Windows & macOS Plugin
+name: Build Windows Plugin
 on:
   workflow_dispatch: 
 
